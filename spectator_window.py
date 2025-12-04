@@ -27,7 +27,8 @@ class SpectatorWindow(QMainWindow):
         self.match_data.match_reset.connect(self.reset_display)
         self.match_data.match_ended.connect(self.show_winner)
         self.match_data.action_undone.connect(self.on_action_undone)
-
+        self.match_data.joint_lock_time_changed.connect(self.update_joint_time)
+        
         # Счетчики предупреждений
         self.warnings_count_1 = 0
         self.warnings_count_2 = 0
@@ -45,11 +46,11 @@ class SpectatorWindow(QMainWindow):
         main_layout.setContentsMargins(15, 15, 15, 15)
 
         # Таймер матча
-        self.timer_label = QLabel("5:00")
+        self.timer_label = QLabel("3:00")
         self.timer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_label.setStyleSheet("""
             QLabel {
-                font-size: 60px;
+                font-size: 160px;
                 font-weight: bold;
                 background-color: black;
                 color: white;
@@ -123,7 +124,7 @@ class SpectatorWindow(QMainWindow):
         score_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         score_label.setStyleSheet(f"""
             QLabel {{
-                font-size: 120px;
+                font-size: 650px;
                 font-weight: bold;
                 color: white;
                 background-color: {color};
@@ -178,6 +179,21 @@ class SpectatorWindow(QMainWindow):
         layout.addWidget(hold_label)
 
         widget.setStyleSheet(f"QWidget {{ background-color: {color}; border-radius: 10px; }}")
+        #БОЛЕВОЙ
+        joint_label = QLabel("Болевой: 00")
+        joint_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        joint_label.setStyleSheet(f"""
+        QLabel {{
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            background-color: {color};
+            padding: 10px;
+        }}
+        """)
+        joint_label.setMaximumHeight(50)
+        setattr(self, f"joint_label_{athlete_num}", joint_label)
+        layout.addWidget(joint_label)
 
         return widget
 
@@ -225,6 +241,10 @@ class SpectatorWindow(QMainWindow):
         label = getattr(self, f"hold_label_{athlete_num}")
         label.setText(f"Удержание: {hold_time}")
 
+    def update_joint_time(self, athlete_num, joint_time):
+        label = getattr(self, f"joint_label_{athlete_num}")
+        label.setText(f"Болевой: {joint_time}")
+    
     def update_athlete_info(self, athlete_num, name, club):
         """Обновить информацию о борце"""
         name_label = getattr(self, f"name_label_{athlete_num}")
@@ -290,7 +310,8 @@ class SpectatorWindow(QMainWindow):
 
     def reset_display(self):
         """Сбросить отображение"""
-        self.timer_label.setText("5:00")
+        self.timer_label.setText("3:00")
+        self.update_joint_time(i, "00")
 
         for i in [1, 2]:
             self.update_score(i, 0)

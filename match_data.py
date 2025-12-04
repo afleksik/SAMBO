@@ -21,6 +21,7 @@ class MatchData(QObject):
     time_changed = pyqtSignal(str)  # time_string
     warning_added = pyqtSignal(int, int)  # athlete_num, warnings_count
     hold_time_changed = pyqtSignal(int, str)  # athlete_num, hold_time
+    joint_lock_time_changed = pyqtSignal(int, str) 
     athlete_info_changed = pyqtSignal(int, str, str)  # athlete_num, name, club
     match_reset = pyqtSignal()
     match_ended = pyqtSignal(int, str)  # winner_num, reason
@@ -41,16 +42,24 @@ class MatchData(QObject):
         self.athlete2_score = 0
         self.athlete2_warnings = 0
         self.athlete2_hold_time = 0
-
+        self.athlete1_joint_time = 0
+        self.athlete2_joint_time = 0
         # Время матча
-        self.match_time = "5:00"
-        self.match_seconds = 300
+        self.match_time = "3:00"
+        self.match_seconds = 180
 
         # Флаг окончания матча
         self.match_is_over = False
 
         # История действий для отмены
         self.action_history = []
+
+    def update_joint_time(self, athlete_num, seconds):
+        if athlete_num == 1:
+            self.athlete1_joint_time = seconds
+        else:
+            self.athlete2_joint_time = seconds
+        self.joint_lock_time_changed.emit(athlete_num, f"{seconds:02d}")
 
     def save_state(self):
         """Сохранить текущее состояние для возможности отмены"""
@@ -227,11 +236,13 @@ class MatchData(QObject):
         self.athlete2_warnings = 0
         self.athlete1_hold_time = 0
         self.athlete2_hold_time = 0
-        self.match_seconds = 300
-        self.match_time = "5:00"
+        self.match_seconds = 180
+        self.match_time = "3:00"
         self.match_is_over = False
         self.action_history = []  # Очистить историю
         self.match_reset.emit()
+        self.athlete1_joint_time = 0
+        self.athlete2_joint_time = 0
 
     def get_winner_at_end(self):
         """Определить победителя по окончанию времени согласно правилам FIAS"""

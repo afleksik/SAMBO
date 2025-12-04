@@ -34,8 +34,23 @@ class JudgeWindow(QMainWindow):
         # Подключаем сигнал окончания матча
         self.match_data.match_ended.connect(self.on_match_ended)
         self.match_data.action_undone.connect(self.on_action_undone)
-
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.joint_timer_1 = QTimer()
+        self.joint_timer_1.timeout.connect(lambda: self.update_joint_timer(1))
+        self.joint_running_1 = False
+        
+        self.joint_timer_2 = QTimer()
+        self.joint_timer_2.timeout.connect(lambda: self.update_joint_timer(2))
+        self.joint_running_2 = False
+        
         self.setup_ui()
+
+    def keyPressEvent(self, event):
+            if event.key() == Qt.Key.Key_Space:
+                if self.match_running and not self.match_data.match_is_over:
+                    self.pause_match_timer()
+                else:
+                    self.start_match_timer()
 
     def setup_ui(self):
         """Настройка интерфейса"""
@@ -108,7 +123,7 @@ class JudgeWindow(QMainWindow):
         layout = QVBoxLayout()
 
         # Отображение времени
-        self.timer_display = QLabel("5:00")
+        self.timer_display = QLabel("3:00")
         self.timer_display.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_display.setStyleSheet("""
             QLabel {
@@ -169,6 +184,7 @@ class JudgeWindow(QMainWindow):
         info_layout = QGridLayout()
 
         name_label = QLabel("Фамилия:")
+        name_label.setStyleSheet("color: black;")
         info_layout.addWidget(name_label, 0, 0)
 
         name_input = QLineEdit()
@@ -180,6 +196,8 @@ class JudgeWindow(QMainWindow):
         info_layout.addWidget(name_input, 0, 1)
 
         club_label = QLabel("Университет:")
+        club_label.setStyleSheet("color: black;")
+
         info_layout.addWidget(club_label, 1, 0)
 
         club_input = QLineEdit()
@@ -200,7 +218,7 @@ class JudgeWindow(QMainWindow):
                 font-size: 32px;
                 font-weight: bold;
                 color: white;
-                background-color: {color};
+                background-color: {color};warning_label.setStyleSheet("color: black")
                 padding: 12px;
                 border-radius: 5px;
             }}
@@ -230,7 +248,7 @@ class JudgeWindow(QMainWindow):
 
         # Предупреждения
         warning_label = QLabel("Предупреждения: 0/3")
-        warning_label.setStyleSheet("font-size: 13px; padding: 5px; font-weight: bold;")
+        warning_label.setStyleSheet("color: black; font-size: 16px; padding: 5px; font-weight: bold;")
         setattr(self, f"warning_display_{athlete_num}", warning_label)
         layout.addWidget(warning_label)
 
@@ -241,7 +259,7 @@ class JudgeWindow(QMainWindow):
 
         # Удержание
         hold_label = QLabel("Удержание: 00 сек")
-        hold_label.setStyleSheet("font-size: 13px; padding: 5px; font-weight: bold;")
+        hold_label.setStyleSheet("color: black; font-size: 13px; padding: 5px; font-weight: bold;")
         setattr(self, f"hold_display_{athlete_num}", hold_label)
         layout.addWidget(hold_label)
 
@@ -250,6 +268,18 @@ class JudgeWindow(QMainWindow):
         hold_btn.setStyleSheet(f"background-color: {color}; color: white;")
         setattr(self, f"hold_button_{athlete_num}", hold_btn)
         layout.addWidget(hold_btn)
+
+        # Болевой прием
+        joint_label = QLabel("Болевой: 00 сек")
+        joint_label.setStyleSheet("color: black; font-size: 13px; padding: 5px; font-weight: bold;")
+        setattr(self, f"joint_display_{athlete_num}", joint_label)
+        layout.addWidget(joint_label)
+        
+        joint_btn = QPushButton("🤼‍♂️ Начать болевой прием")
+        joint_btn.clicked.connect(lambda: self.toggle_joint(athlete_num))
+        joint_btn.setStyleSheet(f"background-color: {color}; color: white;")
+        setattr(self, f"joint_button_{athlete_num}", joint_btn)
+        layout.addWidget(joint_btn)
 
         # Информация о правилах удержания
         hold_info = QLabel("10сек=+2 очка, 20сек=+4 (победа)")
@@ -333,9 +363,9 @@ class JudgeWindow(QMainWindow):
         """Сбросить таймер"""
         self.match_running = False
         self.match_timer.stop()
-        self.match_data.match_seconds = 300
-        self.match_data.update_time("5:00", 300)
-        self.timer_display.setText("5:00")
+        self.match_data.match_seconds = 180
+        self.match_data.update_time("3:00", 180)
+        self.timer_display.setText("3:00")
 
     def update_match_timer(self):
         """Обновить таймер матча"""
@@ -621,7 +651,13 @@ class JudgeWindow(QMainWindow):
 
         # Сбросить UI
         self.reset_match_timer()
-
+        joint_display = getattr(self, f"joint_display_{i}")
+        joint_display.setText("Болевой: 00 сек")
+        joint_button = getattr(self, f"joint_button_{i}")
+        joint_button.setText("🤼‍♂️ Начать болевой прием")
+        color = "#c0392b" if i == 1 else "#2980b9"
+        joint_button.setStyleSheet(f"background-color: {color}; color: white;")
+        
         for i in [1, 2]:
             score_display = getattr(self, f"score_display_{i}")
             score_display.setText("Счет: 0")
@@ -651,3 +687,42 @@ class JudgeWindow(QMainWindow):
         if self.hold_running_2:
             self.hold_running_2 = False
             self.hold_timer_2.stop()
+
+    def toggle_joint(self, athlete_num):
+        if athlete_num == 1:
+            if not self.joint_running_1:
+                self.joint_running_1 = True
+                self.joint_timer_1.start(1000)
+                self.joint_button_1.setText("⏹ Остановить болевой")
+                self.joint_button_1.setStyleSheet("background-color: #e74c3c; color: white;")
+            else:
+                self.joint_running_1 = False
+                self.joint_timer_1.stop()
+                self.joint_button_1.setText("🤼‍♂️ Начать болевой прием")
+                self.joint_button_1.setStyleSheet("background-color: #c0392b; color: white;")
+                self.match_data.update_joint_time(1, 0)
+                self.joint_display_1.setText("Болевой: 00 сек")
+        else:
+            if not self.joint_running_2:
+                self.joint_running_2 = True
+                self.joint_timer_2.start(1000)
+                self.joint_button_2.setText("⏹ Остановить болевой")
+                self.joint_button_2.setStyleSheet("background-color: #e74c3c; color: white;")
+            else:
+                self.joint_running_2 = False
+                self.joint_timer_2.stop()
+                self.joint_button_2.setText("🤼‍♂️ Начать болевой прием")
+                self.joint_button_2.setStyleSheet("background-color: #2980b9; color: white;")
+                self.match_data.update_joint_time(2, 0)
+                self.joint_display_2.setText("Болевой: 00 сек")
+    
+    def update_joint_timer(self, athlete_num):
+        if athlete_num == 1:
+            t = self.match_data.athlete1_joint_time + 1
+            self.match_data.update_joint_time(1, t)
+            self.joint_display_1.setText(f"Болевой: {t:02d} сек")
+        else:
+            t = self.match_data.athlete2_joint_time + 1
+            self.match_data.update_joint_time(2, t)
+            self.joint_display_2.setText(f"Болевой: {t:02d} сек")
+    
