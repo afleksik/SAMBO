@@ -311,12 +311,12 @@ class SpectatorWindow(QMainWindow):
     def reset_display(self):
         """Сбросить отображение"""
         self.timer_label.setText("3:00")
-        self.update_joint_time(i, "00")
 
         for i in [1, 2]:
             self.update_score(i, 0)
             self.update_warnings(i, 0)
             self.update_hold_time(i, "00")
+            self.update_joint_time(i, "00")
             self.update_athlete_info(i, "", "")
 
             # Убрать золотую рамку

@@ -651,12 +651,6 @@ class JudgeWindow(QMainWindow):
 
         # Сбросить UI
         self.reset_match_timer()
-        joint_display = getattr(self, f"joint_display_{i}")
-        joint_display.setText("Болевой: 00 сек")
-        joint_button = getattr(self, f"joint_button_{i}")
-        joint_button.setText("🤼‍♂️ Начать болевой прием")
-        color = "#c0392b" if i == 1 else "#2980b9"
-        joint_button.setStyleSheet(f"background-color: {color}; color: white;")
         
         for i in [1, 2]:
             score_display = getattr(self, f"score_display_{i}")
@@ -667,6 +661,9 @@ class JudgeWindow(QMainWindow):
 
             hold_display = getattr(self, f"hold_display_{i}")
             hold_display.setText("Удержание: 00 сек")
+
+            joint_display = getattr(self, f"joint_display_{i}")
+            joint_display.setText("Болевой: 00 сек")
 
             name_input = getattr(self, f"name_input_{i}")
             name_input.clear()
@@ -680,6 +677,12 @@ class JudgeWindow(QMainWindow):
             color = "#c0392b" if i == 1 else "#2980b9"
             hold_button.setStyleSheet(f"background-color: {color}; color: white;")
 
+            # Сброс кнопок болевого
+            joint_button = getattr(self, f"joint_button_{i}")
+            joint_button.setText("🤼‍♂️ Начать болевой прием")
+            color = "#c0392b" if i == 1 else "#2980b9"
+            joint_button.setStyleSheet(f"background-color: {color}; color: white;")
+
         # Остановить удержания
         if self.hold_running_1:
             self.hold_running_1 = False
@@ -687,6 +690,14 @@ class JudgeWindow(QMainWindow):
         if self.hold_running_2:
             self.hold_running_2 = False
             self.hold_timer_2.stop()
+
+        # Остановить болевой
+        if self.joint_running_1:
+            self.joint_running_1 = False
+            self.joint_timer_1.stop()
+        if self.joint_running_2:
+            self.joint_running_2 = False
+            self.joint_timer_2.stop()
 
     def toggle_joint(self, athlete_num):
         if athlete_num == 1:

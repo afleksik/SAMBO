@@ -240,7 +240,8 @@ class MatchData(QObject):
         self.match_time = "3:00"
         self.match_is_over = False
         self.action_history = []  # Очистить историю
-        self.match_reset.emit()
+        self.match_reset.emit()         # не сомнительная темка, соединяет сигналом с
+                                        # обновлением зрительского экрана!!!! TODO
         self.athlete1_joint_time = 0
         self.athlete2_joint_time = 0
 
