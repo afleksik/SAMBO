@@ -129,7 +129,7 @@ class MatchData(QObject):
             current_score = self.athlete2_score
             opponent_score = self.athlete1_score
 
-        # Проверка тотальной победы по разнице очков (12+ очков)
+        # Проверка тотальной победы по разнице очков (12+ очков) TODO: лажа:(
         score_diff = abs(current_score - opponent_score)
         if score_diff >= 12:
             self.match_is_over = True
@@ -195,9 +195,9 @@ class MatchData(QObject):
         if hold_seconds == 10:
             self.update_score(athlete_num, 2)
         elif hold_seconds == 20:
-            self.update_score(athlete_num, 4)
-            self.match_is_over = True
-            self.match_ended.emit(athlete_num, "Тотальная победа (удержание 20 сек)")
+            self.update_score(athlete_num, 4)  # TODO: лажа:(
+            self.match_is_over = True                # TODO: лажа:(
+            self.match_ended.emit(athlete_num, "Тотальная победа (удержание 20 сек)")  # TODO: лажа:(
             return True
         return False
 
@@ -216,7 +216,8 @@ class MatchData(QObject):
         self.hold_time_changed.emit(athlete_num, f"{hold_seconds:02d}")
 
         # Проверка начисления очков за удержание
-        self.check_hold_down_points(athlete_num, hold_seconds)
+        self.check_hold_down_points(athlete_num, hold_seconds)  # TODO: лажа:(
+                                                                # для проверки как-то странно еще и начислять очки
 
     def update_athlete_info(self, athlete_num, name, club):
         """Обновить информацию о борце"""
@@ -240,8 +241,7 @@ class MatchData(QObject):
         self.match_time = "3:00"
         self.match_is_over = False
         self.action_history = []  # Очистить историю
-        self.match_reset.emit()         # не сомнительная темка, соединяет сигналом с
-                                        # обновлением зрительского экрана!!!! TODO
+        self.match_reset.emit()
         self.athlete1_joint_time = 0
         self.athlete2_joint_time = 0
 

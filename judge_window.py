@@ -269,6 +269,12 @@ class JudgeWindow(QMainWindow):
         setattr(self, f"hold_button_{athlete_num}", hold_btn)
         layout.addWidget(hold_btn)
 
+        # Информация о правилах удержания
+        hold_info = QLabel("10сек=+2 очка, 20сек=+4 (победа)")
+        hold_info.setStyleSheet("font-size: 10px; color: #7f8c8d; font-style: italic;")
+        hold_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(hold_info)
+
         # Болевой прием
         joint_label = QLabel("Болевой: 00 сек")
         joint_label.setStyleSheet("color: black; font-size: 13px; padding: 5px; font-weight: bold;")
@@ -281,12 +287,6 @@ class JudgeWindow(QMainWindow):
         setattr(self, f"joint_button_{athlete_num}", joint_btn)
         layout.addWidget(joint_btn)
 
-        # Информация о правилах удержания
-        hold_info = QLabel("10сек=+2 очка, 20сек=+4 (победа)")
-        hold_info.setStyleSheet("font-size: 10px; color: #7f8c8d; font-style: italic;")
-        hold_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(hold_info)
-
         # Победа
         victory_btn = QPushButton("🏆 ПОБЕДА")
         victory_btn.clicked.connect(lambda: self.declare_victory(athlete_num))
@@ -295,6 +295,7 @@ class JudgeWindow(QMainWindow):
 
         group.setLayout(layout)
         return group
+
     def create_global_controls(self):
         """Создать глобальные кнопки управления"""
         group = QGroupBox("Глобальное управление")
@@ -485,7 +486,8 @@ class JudgeWindow(QMainWindow):
                 self.match_data.update_hold_time(2, 0)
                 self.hold_display_2.setText("Удержание: 00 сек")
 
-    def update_hold_timer(self, athlete_num):
+    def update_hold_timer(self, athlete_num):  # TODO: лажа:(
+                                               # вроде как баллы автоматически начисляются в check_hold_down_points
         """Обновить таймер удержания (БЕЗ ВСПЛЫВАЮЩИХ УВЕДОМЛЕНИЙ)"""
         if athlete_num == 1:
             hold_time = self.match_data.athlete1_hold_time + 1
@@ -526,6 +528,7 @@ class JudgeWindow(QMainWindow):
             name = self.match_data.athlete2_name
 
         self.match_data.update_athlete_info(athlete_num, name, club)
+
     def declare_victory(self, athlete_num):
         """Объявить победу вручную"""
         if athlete_num == 1:
