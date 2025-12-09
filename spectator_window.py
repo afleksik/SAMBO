@@ -124,7 +124,7 @@ class SpectatorWindow(QMainWindow):
         score_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         score_label.setStyleSheet(f"""
             QLabel {{
-                font-size: 650px;
+                font-size: {int(self.height() * 0.6)}px;
                 font-weight: bold;
                 color: white;
                 background-color: {color};
@@ -263,7 +263,7 @@ class SpectatorWindow(QMainWindow):
                 # Победитель - золотая рамка
                 score_label.setStyleSheet(f"""
                     QLabel {{
-                        font-size: 120px;
+                        font-size: {int(self.height() * 0.6)}px;
                         font-weight: bold;
                         color: white;
                         background-color: {color};
@@ -276,7 +276,7 @@ class SpectatorWindow(QMainWindow):
                 # Проигравший - обычное отображение
                 score_label.setStyleSheet(f"""
                     QLabel {{
-                        font-size: 120px;
+                        font-size: {int(self.height() * 0.6)}px;
                         font-weight: bold;
                         color: white;
                         background-color: {color};
@@ -299,7 +299,7 @@ class SpectatorWindow(QMainWindow):
             color = "#c0392b" if i == 1 else "#2980b9"
             score_label.setStyleSheet(f"""
                 QLabel {{
-                    font-size: 120px;
+                    font-size: {int(self.height() * 0.6)}px;
                     font-weight: bold;
                     color: white;
                     background-color: {color};
@@ -324,7 +324,7 @@ class SpectatorWindow(QMainWindow):
             color = "#c0392b" if i == 1 else "#2980b9"
             score_label.setStyleSheet(f"""
                 QLabel {{
-                    font-size: 120px;
+                    font-size: {int(self.height() * 0.6)}px;
                     font-weight: bold;
                     color: white;
                     background-color: {color};
