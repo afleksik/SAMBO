@@ -124,7 +124,7 @@ class SpectatorWindow(QMainWindow):
         score_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         score_label.setStyleSheet(f"""
             QLabel {{
-                font-size: 650px;
+                font-size: {int(self.height() * 0.6)}px;
                 font-weight: bold;
                 color: white;
                 background-color: {color};
@@ -263,7 +263,7 @@ class SpectatorWindow(QMainWindow):
                 # Победитель - золотая рамка
                 score_label.setStyleSheet(f"""
                     QLabel {{
-                        font-size: 120px;
+                        font-size: {int(self.height() * 0.6)}px;
                         font-weight: bold;
                         color: white;
                         background-color: {color};
@@ -276,7 +276,7 @@ class SpectatorWindow(QMainWindow):
                 # Проигравший - обычное отображение
                 score_label.setStyleSheet(f"""
                     QLabel {{
-                        font-size: 120px;
+                        font-size: {int(self.height() * 0.6)}px;
                         font-weight: bold;
                         color: white;
                         background-color: {color};
@@ -299,7 +299,7 @@ class SpectatorWindow(QMainWindow):
             color = "#c0392b" if i == 1 else "#2980b9"
             score_label.setStyleSheet(f"""
                 QLabel {{
-                    font-size: 120px;
+                    font-size: {int(self.height() * 0.6)}px;
                     font-weight: bold;
                     color: white;
                     background-color: {color};
@@ -311,12 +311,12 @@ class SpectatorWindow(QMainWindow):
     def reset_display(self):
         """Сбросить отображение"""
         self.timer_label.setText("3:00")
-        self.update_joint_time(i, "00")
 
         for i in [1, 2]:
             self.update_score(i, 0)
             self.update_warnings(i, 0)
             self.update_hold_time(i, "00")
+            self.update_joint_time(i, "00")
             self.update_athlete_info(i, "", "")
 
             # Убрать золотую рамку
@@ -324,7 +324,7 @@ class SpectatorWindow(QMainWindow):
             color = "#c0392b" if i == 1 else "#2980b9"
             score_label.setStyleSheet(f"""
                 QLabel {{
-                    font-size: 120px;
+                    font-size: {int(self.height() * 0.6)}px;
                     font-weight: bold;
                     color: white;
                     background-color: {color};

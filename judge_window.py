@@ -269,6 +269,12 @@ class JudgeWindow(QMainWindow):
         setattr(self, f"hold_button_{athlete_num}", hold_btn)
         layout.addWidget(hold_btn)
 
+        # Информация о правилах удержания
+        hold_info = QLabel("10сек=+2 очка, 20сек=+4 (победа)")
+        hold_info.setStyleSheet("font-size: 10px; color: #7f8c8d; font-style: italic;")
+        hold_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(hold_info)
+
         # Болевой прием
         joint_label = QLabel("Болевой: 00 сек")
         joint_label.setStyleSheet("color: black; font-size: 13px; padding: 5px; font-weight: bold;")
@@ -281,12 +287,6 @@ class JudgeWindow(QMainWindow):
         setattr(self, f"joint_button_{athlete_num}", joint_btn)
         layout.addWidget(joint_btn)
 
-        # Информация о правилах удержания
-        hold_info = QLabel("10сек=+2 очка, 20сек=+4 (победа)")
-        hold_info.setStyleSheet("font-size: 10px; color: #7f8c8d; font-style: italic;")
-        hold_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(hold_info)
-
         # Победа
         victory_btn = QPushButton("🏆 ПОБЕДА")
         victory_btn.clicked.connect(lambda: self.declare_victory(athlete_num))
@@ -295,6 +295,7 @@ class JudgeWindow(QMainWindow):
 
         group.setLayout(layout)
         return group
+
     def create_global_controls(self):
         """Создать глобальные кнопки управления"""
         group = QGroupBox("Глобальное управление")
@@ -485,7 +486,8 @@ class JudgeWindow(QMainWindow):
                 self.match_data.update_hold_time(2, 0)
                 self.hold_display_2.setText("Удержание: 00 сек")
 
-    def update_hold_timer(self, athlete_num):
+    def update_hold_timer(self, athlete_num):  # TODO: лажа:(
+                                               # вроде как баллы автоматически начисляются в check_hold_down_points
         """Обновить таймер удержания (БЕЗ ВСПЛЫВАЮЩИХ УВЕДОМЛЕНИЙ)"""
         if athlete_num == 1:
             hold_time = self.match_data.athlete1_hold_time + 1
@@ -526,6 +528,7 @@ class JudgeWindow(QMainWindow):
             name = self.match_data.athlete2_name
 
         self.match_data.update_athlete_info(athlete_num, name, club)
+
     def declare_victory(self, athlete_num):
         """Объявить победу вручную"""
         if athlete_num == 1:
@@ -651,12 +654,6 @@ class JudgeWindow(QMainWindow):
 
         # Сбросить UI
         self.reset_match_timer()
-        joint_display = getattr(self, f"joint_display_{i}")
-        joint_display.setText("Болевой: 00 сек")
-        joint_button = getattr(self, f"joint_button_{i}")
-        joint_button.setText("🤼‍♂️ Начать болевой прием")
-        color = "#c0392b" if i == 1 else "#2980b9"
-        joint_button.setStyleSheet(f"background-color: {color}; color: white;")
         
         for i in [1, 2]:
             score_display = getattr(self, f"score_display_{i}")
@@ -667,6 +664,9 @@ class JudgeWindow(QMainWindow):
 
             hold_display = getattr(self, f"hold_display_{i}")
             hold_display.setText("Удержание: 00 сек")
+
+            joint_display = getattr(self, f"joint_display_{i}")
+            joint_display.setText("Болевой: 00 сек")
 
             name_input = getattr(self, f"name_input_{i}")
             name_input.clear()
@@ -680,6 +680,12 @@ class JudgeWindow(QMainWindow):
             color = "#c0392b" if i == 1 else "#2980b9"
             hold_button.setStyleSheet(f"background-color: {color}; color: white;")
 
+            # Сброс кнопок болевого
+            joint_button = getattr(self, f"joint_button_{i}")
+            joint_button.setText("🤼‍♂️ Начать болевой прием")
+            color = "#c0392b" if i == 1 else "#2980b9"
+            joint_button.setStyleSheet(f"background-color: {color}; color: white;")
+
         # Остановить удержания
         if self.hold_running_1:
             self.hold_running_1 = False
@@ -687,6 +693,14 @@ class JudgeWindow(QMainWindow):
         if self.hold_running_2:
             self.hold_running_2 = False
             self.hold_timer_2.stop()
+
+        # Остановить болевой
+        if self.joint_running_1:
+            self.joint_running_1 = False
+            self.joint_timer_1.stop()
+        if self.joint_running_2:
+            self.joint_running_2 = False
+            self.joint_timer_2.stop()
 
     def toggle_joint(self, athlete_num):
         if athlete_num == 1:
