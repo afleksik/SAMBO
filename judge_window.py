@@ -165,11 +165,11 @@ class JudgeWindow(QMainWindow):
         group = QGroupBox(f"Борец {athlete_num} ({'Красный' if athlete_num == 1 else 'Синий'})")
         group.setStyleSheet(f"""
             QGroupBox {{
-                font-size: 15px;
+                font-size: 16px;
                 font-weight: bold;
                 border: 3px solid {color};
                 border-radius: 10px;
-                padding: 12px;
+                padding: 15px;
                 margin-top: 10px;
             }}
             QGroupBox::title {{
@@ -177,16 +177,17 @@ class JudgeWindow(QMainWindow):
                 padding: 5px;
             }}
         """)
-
+        
         layout = QVBoxLayout()
-
+        layout.setSpacing(8)
+        
         # Поля ввода информации
         info_layout = QGridLayout()
-
+        
         name_label = QLabel("Фамилия:")
-        name_label.setStyleSheet("color: black;")
+        name_label.setStyleSheet("color: black; font-size: 14px;")
         info_layout.addWidget(name_label, 0, 0)
-
+        
         name_input = QLineEdit()
         name_input.setPlaceholderText("Введите фамилию борца")
         name_input.textChanged.connect(
@@ -194,12 +195,11 @@ class JudgeWindow(QMainWindow):
         )
         setattr(self, f"name_input_{athlete_num}", name_input)
         info_layout.addWidget(name_input, 0, 1)
-
+        
         club_label = QLabel("Университет:")
-        club_label.setStyleSheet("color: black;")
-
+        club_label.setStyleSheet("color: black; font-size: 14px;")
         info_layout.addWidget(club_label, 1, 0)
-
+        
         club_input = QLineEdit()
         club_input.setPlaceholderText("Введите университет/клуб")
         club_input.textChanged.connect(
@@ -207,94 +207,91 @@ class JudgeWindow(QMainWindow):
         )
         setattr(self, f"club_input_{athlete_num}", club_input)
         info_layout.addWidget(club_input, 1, 1)
-
+        
         layout.addLayout(info_layout)
-
+        
         # Счет
         score_label = QLabel("Счет: 0")
         score_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         score_label.setStyleSheet(f"""
             QLabel {{
-                font-size: 32px;
+                font-size: 36px;
                 font-weight: bold;
                 color: white;
-                background-color: {color};warning_label.setStyleSheet("color: black")
-                padding: 12px;
+                background-color: {color};
+                padding: 15px;
                 border-radius: 5px;
             }}
         """)
         setattr(self, f"score_display_{athlete_num}", score_label)
         layout.addWidget(score_label)
-
+        
         # Кнопки добавления очков
         points_layout = QHBoxLayout()
-
+        
         btn1 = QPushButton("+1")
         btn1.clicked.connect(lambda: self.add_points(athlete_num, 1))
-        btn1.setStyleSheet(f"background-color: {color}; color: white;")
+        btn1.setStyleSheet(f"background-color: {color}; color: white; font-size: 16px; min-height: 45px;")
         points_layout.addWidget(btn1)
-
+        
         btn2 = QPushButton("+2")
         btn2.clicked.connect(lambda: self.add_points(athlete_num, 2))
-        btn2.setStyleSheet(f"background-color: {color}; color: white;")
+        btn2.setStyleSheet(f"background-color: {color}; color: white; font-size: 16px; min-height: 45px;")
         points_layout.addWidget(btn2)
-
+        
         btn4 = QPushButton("+4")
         btn4.clicked.connect(lambda: self.add_points(athlete_num, 4))
-        btn4.setStyleSheet(f"background-color: {color}; color: white;")
+        btn4.setStyleSheet(f"background-color: {color}; color: white; font-size: 16px; min-height: 45px;")
         points_layout.addWidget(btn4)
-
+        
         layout.addLayout(points_layout)
-
+        
         # Предупреждения
         warning_label = QLabel("Предупреждения: 0/3")
         warning_label.setStyleSheet("color: black; font-size: 16px; padding: 5px; font-weight: bold;")
         setattr(self, f"warning_display_{athlete_num}", warning_label)
         layout.addWidget(warning_label)
-
+        
         warning_btn = QPushButton("⚠ Добавить предупреждение")
         warning_btn.clicked.connect(lambda: self.add_warning(athlete_num))
-        warning_btn.setStyleSheet("background-color: #f39c12; color: white;")
+        warning_btn.setStyleSheet("background-color: #f39c12; color: white; font-size: 15px; min-height: 40px;")
         layout.addWidget(warning_btn)
-
+        
         # Удержание
         hold_label = QLabel("Удержание: 00 сек")
-        hold_label.setStyleSheet("color: black; font-size: 13px; padding: 5px; font-weight: bold;")
+        hold_label.setStyleSheet("color: black; font-size: 14px; padding: 5px; font-weight: bold;")
         setattr(self, f"hold_display_{athlete_num}", hold_label)
         layout.addWidget(hold_label)
-
+        
         hold_btn = QPushButton("⏱ Начать удержание")
         hold_btn.clicked.connect(lambda: self.toggle_hold(athlete_num))
-        hold_btn.setStyleSheet(f"background-color: {color}; color: white;")
+        hold_btn.setStyleSheet(f"background-color: {color}; color: white; font-size: 15px; min-height: 40px;")
         setattr(self, f"hold_button_{athlete_num}", hold_btn)
         layout.addWidget(hold_btn)
-
+        
         # Информация о правилах удержания
         hold_info = QLabel("10сек=+2 очка, 20сек=+4 (победа)")
-        hold_info.setStyleSheet("font-size: 10px; color: #7f8c8d; font-style: italic;")
+        hold_info.setStyleSheet("font-size: 11px; color: #7f8c8d; font-style: italic;")
         hold_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(hold_info)
-
+        
         # Болевой прием
         joint_label = QLabel("Болевой: 00 сек")
-        joint_label.setStyleSheet("color: black; font-size: 13px; padding: 5px; font-weight: bold;")
+        joint_label.setStyleSheet("color: black; font-size: 14px; padding: 5px; font-weight: bold;")
         setattr(self, f"joint_display_{athlete_num}", joint_label)
         layout.addWidget(joint_label)
         
-        joint_btn = QPushButton("🤼‍♂️ Начать болевой прием")
+        joint_btn = QPushButton("🤼 Начать болевой прием")
         joint_btn.clicked.connect(lambda: self.toggle_joint(athlete_num))
-        joint_btn.setStyleSheet(f"background-color: {color}; color: white;")
+        joint_btn.setStyleSheet(f"background-color: {color}; color: white; font-size: 15px; min-height: 40px;")
         setattr(self, f"joint_button_{athlete_num}", joint_btn)
         layout.addWidget(joint_btn)
-
-        # Победа
-        victory_btn = QPushButton("🏆 ПОБЕДА")
-        victory_btn.clicked.connect(lambda: self.declare_victory(athlete_num))
-        victory_btn.setStyleSheet(f"background-color: gold; color: black; font-size: 15px;")
-        layout.addWidget(victory_btn)
-
+        
+        # КНОПКА ПОБЕДА УДАЛЕНА
+        
         group.setLayout(layout)
         return group
+    
 
     def create_global_controls(self):
         """Создать глобальные кнопки управления"""
@@ -529,13 +526,13 @@ class JudgeWindow(QMainWindow):
 
         self.match_data.update_athlete_info(athlete_num, name, club)
 
-    def declare_victory(self, athlete_num):
+    def declare_victory(self, athlete_num, event):
         """Объявить победу вручную"""
         if athlete_num == 1:
             name = self.match_data.athlete1_name or "Борец 1"
         else:
             name = self.match_data.athlete2_name or "Борец 2"
-
+        super().resizeEvent(event)
         reply = QMessageBox.question(
             self,
             "Подтверждение победы",

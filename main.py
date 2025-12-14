@@ -38,11 +38,11 @@ def main():
     judge_window.show()
 
     # Опционально: размещаем окна на разных мониторах
-    screens = app.screens()
-    if len(screens) > 1:
-        # Если есть второй монитор, показываем зрительское окно там
-        second_screen = screens[1]
-        spectator_window.setGeometry(second_screen.geometry())
+    #screens = app.screens()
+    #if len(screens) > 1:
+    #    # Если есть второй монитор, показываем зрительское окно там
+    #    second_screen = screens[1]
+    #    spectator_window.setGeometry(second_screen.geometry())
 
     print("="*70)
     print("   ТАБЛО ДЛЯ САМБО - Версия 3.0 (Финальная)")
