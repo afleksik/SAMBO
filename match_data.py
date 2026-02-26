@@ -131,7 +131,7 @@ class MatchData(QObject):
 
         # Проверка тотальной победы по разнице очков (12+ очков) TODO: лажа:(
         score_diff = abs(current_score - opponent_score)
-        if score_diff >= 12:
+        if score_diff >= 8:
             self.match_is_over = True
             winner = athlete_num if current_score > opponent_score else (3 - athlete_num)
             self.match_ended.emit(winner, "Тотальная победа (превосходство 12+ очков)")
@@ -251,7 +251,7 @@ class MatchData(QObject):
 
         if score_diff >= 8:
             winner = 1 if self.athlete1_score > self.athlete2_score else 2
-            return winner, "Победа по преимуществу (8-11 очков)"
+            return winner, "Победа по преимуществу"
         elif score_diff >= 1:
             winner = 1 if self.athlete1_score > self.athlete2_score else 2
             return winner, "Победа по очкам"
