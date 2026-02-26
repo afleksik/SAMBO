@@ -164,9 +164,9 @@ class MatchData(QObject):
 
         # Начисление очков сопернику согласно правилам FIAS
         if warnings_count == 1:
-            bonus_points = 1
+            bonus_points = 0
         elif warnings_count == 2:
-            bonus_points = 2
+            bonus_points = 1
         elif warnings_count == 3:
             bonus_points = 1
         else:
