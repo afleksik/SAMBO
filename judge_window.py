@@ -1,10 +1,9 @@
 """
 Окно управления для судей (финальная версия с отменой действий)
 """
-from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QApplication,
                              QLabel, QPushButton, QLineEdit, QGroupBox, QGridLayout, QMessageBox)
 from PyQt6.QtCore import QTimer, Qt
-
 
 class JudgeWindow(QMainWindow):
     """Окно управления для судей с применением правил FIAS и функцией отмены"""
@@ -22,6 +21,8 @@ class JudgeWindow(QMainWindow):
         self.match_timer = QTimer()
         self.match_timer.timeout.connect(self.update_match_timer)
         self.match_running = False
+
+        self.hold_joint_is_running = False
 
         # self.hold_timer_1 = QTimer()
         # self.hold_timer_1.timeout.connect(lambda: self.update_hold_timer(1))
@@ -69,16 +70,16 @@ class JudgeWindow(QMainWindow):
                 font-size: 22px;
                 font-weight: bold;
                 padding: 10px;
-                background-color: #2c3e50;
+                background-color: #808080;
                 color: white;
                 border-radius: 5px;
             }
         """)
-        main_layout.addWidget(title)
+        main_layout.addWidget(title, stretch=1)
 
         # Таймер матча
         timer_group = self.create_timer_section()
-        main_layout.addWidget(timer_group)
+        main_layout.addWidget(timer_group, stretch=3)
 
         # Секции для двух борцов
         athletes_layout = QHBoxLayout()
@@ -91,11 +92,11 @@ class JudgeWindow(QMainWindow):
         athlete2_group = self.create_athlete_control(2, "#2980b9")
         athletes_layout.addWidget(athlete2_group)
 
-        main_layout.addLayout(athletes_layout)
+        main_layout.addLayout(athletes_layout, stretch=5)
 
         # Глобальные кнопки управления
         control_group = self.create_global_controls()
-        main_layout.addWidget(control_group)
+        main_layout.addWidget(control_group, stretch=3)
 
         self.setStyleSheet("""
             QMainWindow { background-color: #ecf0f1; }
@@ -124,11 +125,13 @@ class JudgeWindow(QMainWindow):
         layout = QVBoxLayout()
 
         # Отображение времени
+        timer_layout = QHBoxLayout()
+
         self.timer_display = QLabel("3:00")
         self.timer_display.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_display.setStyleSheet("""
             QLabel {
-                font-size: 42px;
+                font-size: 64px;
                 font-weight: bold;
                 background-color: black;
                 color: white;
@@ -136,24 +139,40 @@ class JudgeWindow(QMainWindow):
                 border-radius: 5px;
             }
         """)
-        layout.addWidget(self.timer_display)
+        timer_layout.addWidget(self.timer_display, stretch=9)
+
+        self.hold_timer_display = QLabel("")
+        self.hold_timer_display.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.hold_timer_display.setStyleSheet("""
+            QLabel {
+                font-size: 64px;
+                font-weight: bold;
+                background-color: black;
+                color: yellow;
+                padding: 15px;
+                border-radius: 5px;
+            }
+        """)
+        timer_layout.addWidget(self.hold_timer_display, stretch=1)
+
+        layout.addLayout(timer_layout)
 
         # Кнопки управления таймером
         timer_buttons = QHBoxLayout()
 
         self.start_button = QPushButton("▶ Старт")
         self.start_button.clicked.connect(self.start_match_timer)
-        self.start_button.setStyleSheet("background-color: #27ae60; color: white;")
+        self.start_button.setStyleSheet("background-color: #2c3e50; color: white;")
         timer_buttons.addWidget(self.start_button)
 
         self.pause_button = QPushButton("⏸ Пауза")
         self.pause_button.clicked.connect(self.pause_match_timer)
-        self.pause_button.setStyleSheet("background-color: #f39c12; color: white;")
+        self.pause_button.setStyleSheet("background-color: #2c3e50; color: white;")
         timer_buttons.addWidget(self.pause_button)
 
         self.reset_button = QPushButton("↻ Сброс")
         self.reset_button.clicked.connect(self.reset_match_timer)
-        self.reset_button.setStyleSheet("background-color: #3498db; color: white;")
+        self.reset_button.setStyleSheet("background-color: #2c3e50; color: white;")
         timer_buttons.addWidget(self.reset_button)
 
         layout.addLayout(timer_buttons)
@@ -299,6 +318,23 @@ class JudgeWindow(QMainWindow):
         group = QGroupBox("Глобальное управление")
         layout = QVBoxLayout()
 
+        # Нулевая строка кнопок
+        row0 = QHBoxLayout()
+
+        # КНОПКА ЗАПУСКА СЕКУНДОМЕРА УДЕРЖАНИЯ/БОЛЕВОГО
+        stopwatch_btn = QPushButton("⏱ СЧИТАТЬ БОЛЕВОЙ/УДЕРЖАНИЕ")
+        stopwatch_btn.clicked.connect(self.start_hold_joint_seconds)  # TODO function
+        stopwatch_btn.setStyleSheet("""
+            background-color: #9b59b6; 
+            color: white; 
+            font-size: 15px;
+            min-height: 50px;
+        """)
+        self.stopwatch_button = stopwatch_btn
+        row0.addWidget(stopwatch_btn)
+
+        layout.addLayout(row0)
+
         # Первая строка кнопок
         row1 = QHBoxLayout()
 
@@ -306,7 +342,7 @@ class JudgeWindow(QMainWindow):
         undo_btn = QPushButton("↶ ОТМЕНИТЬ ПОСЛЕДНЕЕ ДЕЙСТВИЕ")
         undo_btn.clicked.connect(self.undo_last_action)
         undo_btn.setStyleSheet("""
-            background-color: #9b59b6; 
+            background-color: #2c3e50; 
             color: white; 
             font-size: 15px;
             min-height: 50px;
@@ -322,7 +358,7 @@ class JudgeWindow(QMainWindow):
         reset_all_btn = QPushButton("🔄 СБРОС ВСЕГО")
         reset_all_btn.clicked.connect(self.reset_all)
         reset_all_btn.setStyleSheet("""
-            background-color: #e74c3c; 
+            background-color: #2c3e50; 
             color: white; 
             font-size: 15px;
             min-height: 45px;
@@ -333,7 +369,7 @@ class JudgeWindow(QMainWindow):
         end_match_btn = QPushButton("⏱ Завершить матч (определить победителя)")
         end_match_btn.clicked.connect(self.end_match_and_determine_winner)
         end_match_btn.setStyleSheet("""
-            background-color: #16a085; 
+            background-color: #2c3e50; 
             color: white; 
             font-size: 14px;
             min-height: 45px;
@@ -356,15 +392,31 @@ class JudgeWindow(QMainWindow):
     def pause_match_timer(self):
         """Поставить на паузу"""
         self.match_running = False
+        self.end_hold_joint_seconds()
         self.match_timer.stop()
+
+    def start_hold_joint_seconds(self):
+        """Запустить отсчет удержания/болевого"""
+        if self.hold_joint_is_running:
+            self.end_hold_joint_seconds()
+            return
+        if self.match_running and not self.match_data.match_is_over:
+            self.hold_joint_is_running = True
+
+    def end_hold_joint_seconds(self):
+        """Отменить удержание/болевой"""
+        self.hold_joint_is_running = False
+        self.match_data.hold_joint_seconds = 0
 
     def reset_match_timer(self):
         """Сбросить таймер"""
+        self.end_hold_joint_seconds()
         self.match_running = False
         self.match_timer.stop()
         self.match_data.match_seconds = 180
-        self.match_data.update_time("3:00", 180)
+        self.match_data.update_time("3:00", 180, 0)
         self.timer_display.setText("3:00")
+        self.hold_timer_display.setText("")
 
     def update_match_timer(self):
         """Обновить таймер матча"""
@@ -374,9 +426,17 @@ class JudgeWindow(QMainWindow):
             secs = self.match_data.match_seconds % 60
             time_str = f"{mins}:{secs:02d}"
             self.timer_display.setText(time_str)
-            self.match_data.update_time(time_str, self.match_data.match_seconds)
+            # TODO: check vvv
+            hold_time_str = ""
+            if self.hold_joint_is_running:
+                self.match_data.hold_joint_seconds += 1
+                hold_time_str = f"{self.match_data.hold_joint_seconds}"
+            self.hold_timer_display.setText(hold_time_str)
+            self.match_data.update_time(time_str, self.match_data.match_seconds,
+                                        self.match_data.hold_joint_seconds)
         else:
             # Время вышло - автоматически определяем победителя
+            # TODO: Сигнал остановки времени
             self.pause_match_timer()
             self.end_match_and_determine_winner()
 

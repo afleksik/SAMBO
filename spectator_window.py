@@ -46,11 +46,13 @@ class SpectatorWindow(QMainWindow):
         main_layout.setContentsMargins(15, 15, 15, 15)
         
         # Таймер матча
+        timer_layout = QHBoxLayout()
+
         self.timer_label = QLabel("3:00")
         self.timer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_label.setStyleSheet("""
             QLabel {
-                font-size: 80px;
+                font-size: 180px;
                 font-weight: bold;
                 background-color: black;
                 color: white;
@@ -58,7 +60,24 @@ class SpectatorWindow(QMainWindow):
                 border-radius: 10px;
             }
         """)
-        main_layout.addWidget(self.timer_label, stretch=1)
+        timer_layout.addWidget(self.timer_label, stretch=8)
+
+        self.hold_timer_label = QLabel("")
+        self.hold_timer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.hold_timer_label.setStyleSheet("""
+            QLabel {
+                font-size: 100px;
+                font-weight: bold;
+                background-color: black;
+                color: yellow;
+                padding: 10px;
+                border-radius: 10px;
+            }
+        """)
+        timer_layout.addWidget(self.hold_timer_label, stretch=1)
+
+        # main_layout.addWidget(self.timer_label, stretch=1)
+        main_layout.addLayout(timer_layout, stretch=1)
         
         # Горизонтальный layout для двух борцов
         athletes_layout = QHBoxLayout()
@@ -93,7 +112,7 @@ class SpectatorWindow(QMainWindow):
         name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         name_label.setStyleSheet(f"""
             QLabel {{
-                font-size: 28px;
+                font-size: 80px;
                 font-weight: bold;
                 color: white;
                 background-color: {color};
@@ -109,7 +128,8 @@ class SpectatorWindow(QMainWindow):
         club_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         club_label.setStyleSheet(f"""
             QLabel {{
-                font-size: 16px;
+                font-size: 60px;
+                font-weight: bold;
                 color: white;
                 background-color: {color};
                 padding: 5px;
@@ -234,9 +254,10 @@ class SpectatorWindow(QMainWindow):
         label = getattr(self, f"score_label_{athlete_num}")
         label.setText(str(new_score))
         
-    def update_time(self, time_string):
+    def update_time(self, time_string, hold_time):
         """Обновить время"""
         self.timer_label.setText(time_string)
+        self.hold_timer_label.setText(str(hold_time) if hold_time else "")
         
     def update_warnings(self, athlete_num, warnings_count):
         """Обновить визуализацию предупреждений (желтые квадраты)"""
@@ -303,6 +324,7 @@ class SpectatorWindow(QMainWindow):
     def reset_display(self):
         """Сбросить отображение"""
         self.timer_label.setText("3:00")
+        self.hold_timer_label.setText("")
         
         for i in [1, 2]:
             self.update_score(i, 0)
