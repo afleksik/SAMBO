@@ -48,7 +48,8 @@ class SpectatorWindow(QMainWindow):
         # Таймер матча
         timer_layout = QHBoxLayout()
 
-        self.timer_label = QLabel("3:00")
+        time_str = f"{self.match_data.match_seconds // 60}:{(self.match_data.match_seconds % 60):02d}"
+        self.timer_label = QLabel(time_str)
         self.timer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_label.setStyleSheet("""
             QLabel {
@@ -323,7 +324,8 @@ class SpectatorWindow(QMainWindow):
         
     def reset_display(self):
         """Сбросить отображение"""
-        self.timer_label.setText("3:00")
+        time_str = f"{self.match_data.match_seconds // 60}:{(self.match_data.match_seconds % 60):02d}"
+        self.timer_label.setText(time_str)
         self.hold_timer_label.setText("")
         
         for i in [1, 2]:

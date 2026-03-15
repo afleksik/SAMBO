@@ -3,7 +3,8 @@
 """
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QApplication,
                              QLabel, QPushButton, QLineEdit, QGroupBox, QGridLayout, QMessageBox)
-from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtCore import QTimer, Qt, QUrl
+from PyQt6.QtMultimedia import QSoundEffect
 
 class JudgeWindow(QMainWindow):
     """Окно управления для судей с применением правил FIAS и функцией отмены"""
@@ -21,7 +22,8 @@ class JudgeWindow(QMainWindow):
         self.match_timer = QTimer()
         self.match_timer.timeout.connect(self.update_match_timer)
         self.match_running = False
-
+        self.match_end_sound = QSoundEffect()
+        self.match_end_sound.setSource(QUrl.fromLocalFile("sounds/match_end.wav"))
         self.hold_joint_is_running = False
 
         # self.hold_timer_1 = QTimer()
@@ -160,20 +162,28 @@ class JudgeWindow(QMainWindow):
         # Кнопки управления таймером
         timer_buttons = QHBoxLayout()
 
+        self.time_input = QLineEdit()
+        self.time_input.setPlaceholderText("Время")
+        # self.time_input.textChanged.connect(
+        #     lambda text: self.update_athlete_name(athlete_num, text)
+        # )
+        # setattr(self, f"name_input_{athlete_num}", self.time_input)
+        timer_buttons.addWidget(self.time_input, stretch=1)
+
         self.start_button = QPushButton("▶ Старт")
         self.start_button.clicked.connect(self.start_match_timer)
         self.start_button.setStyleSheet("background-color: #2c3e50; color: white;")
-        timer_buttons.addWidget(self.start_button)
+        timer_buttons.addWidget(self.start_button, stretch=2)
 
-        self.pause_button = QPushButton("⏸ Пауза")
+        self.pause_button = QPushButton("|| Пауза")
         self.pause_button.clicked.connect(self.pause_match_timer)
         self.pause_button.setStyleSheet("background-color: #2c3e50; color: white;")
-        timer_buttons.addWidget(self.pause_button)
+        timer_buttons.addWidget(self.pause_button, stretch=2)
 
         self.reset_button = QPushButton("↻ Сброс")
         self.reset_button.clicked.connect(self.reset_match_timer)
         self.reset_button.setStyleSheet("background-color: #2c3e50; color: white;")
-        timer_buttons.addWidget(self.reset_button)
+        timer_buttons.addWidget(self.reset_button, stretch=2)
 
         layout.addLayout(timer_buttons)
         group.setLayout(layout)
@@ -413,9 +423,9 @@ class JudgeWindow(QMainWindow):
         self.end_hold_joint_seconds()
         self.match_running = False
         self.match_timer.stop()
-        self.match_data.match_seconds = 180
-        self.match_data.update_time("3:00", 180, 0)
-        self.timer_display.setText("3:00")
+        self.match_data.match_seconds = int(self.time_input.text() if self.time_input.text() else 0)
+        self.match_data.update_time(self.match_data.match_seconds, 0)
+        self.timer_display.setText(self.match_data.match_time)
         self.hold_timer_display.setText("")
 
     def update_match_timer(self):
@@ -432,11 +442,12 @@ class JudgeWindow(QMainWindow):
                 self.match_data.hold_joint_seconds += 1
                 hold_time_str = f"{self.match_data.hold_joint_seconds}"
             self.hold_timer_display.setText(hold_time_str)
-            self.match_data.update_time(time_str, self.match_data.match_seconds,
+            self.match_data.update_time(self.match_data.match_seconds,
                                         self.match_data.hold_joint_seconds)
         else:
             # Время вышло - автоматически определяем победителя
             # TODO: Сигнал остановки времени
+            self.match_end_sound.play()
             self.pause_match_timer()
             self.end_match_and_determine_winner()
 

@@ -45,8 +45,8 @@ class MatchData(QObject):
         # self.athlete1_joint_time = 0
         # self.athlete2_joint_time = 0
         # Время матча
-        self.match_time = "3:00"
         self.match_seconds = 180
+        self.match_time = f"{self.match_seconds // 60}:{(self.match_seconds % 60):02d}"
         self.hold_joint_seconds = 0
 
         # Флаг окончания матча
@@ -202,12 +202,12 @@ class MatchData(QObject):
     #         return True
     #     return False
 
-    def update_time(self, time_string, seconds, hold_seconds):
+    def update_time(self, match_seconds, hold_seconds):
         """Обновить время матча"""
-        self.match_time = time_string
-        self.match_seconds = seconds
+        self.match_seconds = match_seconds
+        self.match_time = f"{match_seconds // 60}:{match_seconds % 60:02d}"
         self.hold_joint_seconds = hold_seconds
-        self.time_changed.emit(time_string, hold_seconds)
+        self.time_changed.emit(self.match_time, hold_seconds)
         # TODO: hold_joint_seconds update
 
     # def update_hold_time(self, athlete_num, hold_seconds):
@@ -241,7 +241,7 @@ class MatchData(QObject):
         # self.athlete1_hold_time = 0
         # self.athlete2_hold_time = 0
         self.match_seconds = 180
-        self.match_time = "3:00"
+        self.match_time = f"{self.match_seconds // 60}:{(self.match_seconds % 60):02d}"
         self.hold_joint_seconds = 0
         self.match_is_over = False
         self.action_history = []  # Очистить историю
