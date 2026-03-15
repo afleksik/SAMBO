@@ -163,7 +163,7 @@ class JudgeWindow(QMainWindow):
         timer_buttons = QHBoxLayout()
 
         self.time_input = QLineEdit()
-        self.time_input.setPlaceholderText("Время")
+        self.time_input.setPlaceholderText("Время (в секундах)")
         # self.time_input.textChanged.connect(
         #     lambda text: self.update_athlete_name(athlete_num, text)
         # )
