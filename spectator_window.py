@@ -22,12 +22,12 @@ class SpectatorWindow(QMainWindow):
         self.match_data.score_changed.connect(self.update_score)
         self.match_data.time_changed.connect(self.update_time)
         self.match_data.warning_added.connect(self.update_warnings)
-        self.match_data.hold_time_changed.connect(self.update_hold_time)
+        # self.match_data.hold_time_changed.connect(self.update_hold_time)
         self.match_data.athlete_info_changed.connect(self.update_athlete_info)
         self.match_data.match_reset.connect(self.reset_display)
         self.match_data.match_ended.connect(self.show_winner)
         self.match_data.action_undone.connect(self.on_action_undone)
-        self.match_data.joint_lock_time_changed.connect(self.update_joint_time)
+        # self.match_data.joint_lock_time_changed.connect(self.update_joint_time)
         
         # Счетчики предупреждений
         self.warnings_count_1 = 0
@@ -46,11 +46,14 @@ class SpectatorWindow(QMainWindow):
         main_layout.setContentsMargins(15, 15, 15, 15)
         
         # Таймер матча
-        self.timer_label = QLabel("3:00")
+        timer_layout = QHBoxLayout()
+
+        time_str = f"{self.match_data.match_seconds // 60}:{(self.match_data.match_seconds % 60):02d}"
+        self.timer_label = QLabel(time_str)
         self.timer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_label.setStyleSheet("""
             QLabel {
-                font-size: 80px;
+                font-size: 180px;
                 font-weight: bold;
                 background-color: black;
                 color: white;
@@ -58,7 +61,24 @@ class SpectatorWindow(QMainWindow):
                 border-radius: 10px;
             }
         """)
-        main_layout.addWidget(self.timer_label, stretch=1)
+        timer_layout.addWidget(self.timer_label, stretch=8)
+
+        self.hold_timer_label = QLabel("")
+        self.hold_timer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.hold_timer_label.setStyleSheet("""
+            QLabel {
+                font-size: 100px;
+                font-weight: bold;
+                background-color: black;
+                color: yellow;
+                padding: 10px;
+                border-radius: 10px;
+            }
+        """)
+        timer_layout.addWidget(self.hold_timer_label, stretch=1)
+
+        # main_layout.addWidget(self.timer_label, stretch=1)
+        main_layout.addLayout(timer_layout, stretch=1)
         
         # Горизонтальный layout для двух борцов
         athletes_layout = QHBoxLayout()
@@ -93,7 +113,7 @@ class SpectatorWindow(QMainWindow):
         name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         name_label.setStyleSheet(f"""
             QLabel {{
-                font-size: 28px;
+                font-size: 80px;
                 font-weight: bold;
                 color: white;
                 background-color: {color};
@@ -109,7 +129,8 @@ class SpectatorWindow(QMainWindow):
         club_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         club_label.setStyleSheet(f"""
             QLabel {{
-                font-size: 16px;
+                font-size: 60px;
+                font-weight: bold;
                 color: white;
                 background-color: {color};
                 padding: 5px;
@@ -159,35 +180,35 @@ class SpectatorWindow(QMainWindow):
         setattr(self, f"warning_squares_{athlete_num}", warning_squares)
         layout.addWidget(warnings_container, stretch=0)
         
-        # Удержание
-        hold_label = QLabel("Удержание: 00")
-        hold_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        hold_label.setStyleSheet(f"""
-            QLabel {{
-                font-size: 18px;
-                font-weight: bold;
-                color: white;
-                background-color: {color};
-                padding: 8px;
-            }}
-        """)
-        setattr(self, f"hold_label_{athlete_num}", hold_label)
-        layout.addWidget(hold_label, stretch=0)
-        
-        # БОЛЕВОЙ
-        joint_label = QLabel("Болевой: 00")
-        joint_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        joint_label.setStyleSheet(f"""
-            QLabel {{
-                font-size: 18px;
-                font-weight: bold;
-                color: white;
-                background-color: {color};
-                padding: 8px;
-            }}
-        """)
-        setattr(self, f"joint_label_{athlete_num}", joint_label)
-        layout.addWidget(joint_label, stretch=0)
+        # # Удержание
+        # hold_label = QLabel("Удержание: 00")
+        # hold_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # hold_label.setStyleSheet(f"""
+        #     QLabel {{
+        #         font-size: 18px;
+        #         font-weight: bold;
+        #         color: white;
+        #         background-color: {color};
+        #         padding: 8px;
+        #     }}
+        # """)
+        # setattr(self, f"hold_label_{athlete_num}", hold_label)
+        # layout.addWidget(hold_label, stretch=0)
+        #
+        # # БОЛЕВОЙ
+        # joint_label = QLabel("Болевой: 00")
+        # joint_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # joint_label.setStyleSheet(f"""
+        #     QLabel {{
+        #         font-size: 18px;
+        #         font-weight: bold;
+        #         color: white;
+        #         background-color: {color};
+        #         padding: 8px;
+        #     }}
+        # """)
+        # setattr(self, f"joint_label_{athlete_num}", joint_label)
+        # layout.addWidget(joint_label, stretch=0)
         
         widget.setStyleSheet(f"QWidget {{ background-color: {color}; border-radius: 10px; }}")
         return widget
@@ -234,9 +255,10 @@ class SpectatorWindow(QMainWindow):
         label = getattr(self, f"score_label_{athlete_num}")
         label.setText(str(new_score))
         
-    def update_time(self, time_string):
+    def update_time(self, time_string, hold_time):
         """Обновить время"""
         self.timer_label.setText(time_string)
+        self.hold_timer_label.setText(str(hold_time) if hold_time else "")
         
     def update_warnings(self, athlete_num, warnings_count):
         """Обновить визуализацию предупреждений (желтые квадраты)"""
@@ -268,14 +290,14 @@ class SpectatorWindow(QMainWindow):
         else:
             self.warnings_count_2 = warnings_count
             
-    def update_hold_time(self, athlete_num, hold_time):
-        """Обновить время удержания"""
-        label = getattr(self, f"hold_label_{athlete_num}")
-        label.setText(f"Удержание: {hold_time}")
-        
-    def update_joint_time(self, athlete_num, joint_time):
-        label = getattr(self, f"joint_label_{athlete_num}")
-        label.setText(f"Болевой: {joint_time}")
+    # def update_hold_time(self, athlete_num, hold_time):
+    #     """Обновить время удержания"""
+    #     label = getattr(self, f"hold_label_{athlete_num}")
+    #     label.setText(f"Удержание: {hold_time}")
+    #
+    # def update_joint_time(self, athlete_num, joint_time):
+    #     label = getattr(self, f"joint_label_{athlete_num}")
+    #     label.setText(f"Болевой: {joint_time}")
         
     def update_athlete_info(self, athlete_num, name, club):
         """Обновить информацию о борце"""
@@ -302,13 +324,15 @@ class SpectatorWindow(QMainWindow):
         
     def reset_display(self):
         """Сбросить отображение"""
-        self.timer_label.setText("3:00")
+        time_str = f"{self.match_data.match_seconds // 60}:{(self.match_data.match_seconds % 60):02d}"
+        self.timer_label.setText(time_str)
+        self.hold_timer_label.setText("")
         
         for i in [1, 2]:
             self.update_score(i, 0)
             self.update_warnings(i, 0)
-            self.update_hold_time(i, "00")
-            self.update_joint_time(i, "00")
+            # self.update_hold_time(i, "00")
+            # self.update_joint_time(i, "00")
             self.update_athlete_info(i, "", "")
             
         # Убрать золотую рамку

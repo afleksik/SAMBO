@@ -1,10 +1,10 @@
 """
 Окно управления для судей (финальная версия с отменой действий)
 """
-from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
+from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QApplication,
                              QLabel, QPushButton, QLineEdit, QGroupBox, QGridLayout, QMessageBox)
-from PyQt6.QtCore import QTimer, Qt
-
+from PyQt6.QtCore import QTimer, Qt, QUrl
+from PyQt6.QtMultimedia import QSoundEffect
 
 class JudgeWindow(QMainWindow):
     """Окно управления для судей с применением правил FIAS и функцией отмены"""
@@ -22,26 +22,30 @@ class JudgeWindow(QMainWindow):
         self.match_timer = QTimer()
         self.match_timer.timeout.connect(self.update_match_timer)
         self.match_running = False
+        self.match_end_sound = QSoundEffect()
+        self.match_end_sound.setSource(QUrl.fromLocalFile("sounds/match_end.wav"))
+        self.hold_joint_is_running = False
 
-        self.hold_timer_1 = QTimer()
-        self.hold_timer_1.timeout.connect(lambda: self.update_hold_timer(1))
-        self.hold_running_1 = False
-
-        self.hold_timer_2 = QTimer()
-        self.hold_timer_2.timeout.connect(lambda: self.update_hold_timer(2))
-        self.hold_running_2 = False
+        # self.hold_timer_1 = QTimer()
+        # self.hold_timer_1.timeout.connect(lambda: self.update_hold_timer(1))
+        # self.hold_running_1 = False
+        #
+        # self.hold_timer_2 = QTimer()
+        # self.hold_timer_2.timeout.connect(lambda: self.update_hold_timer(2))
+        # self.hold_running_2 = False
 
         # Подключаем сигнал окончания матча
         self.match_data.match_ended.connect(self.on_match_ended)
         self.match_data.action_undone.connect(self.on_action_undone)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.joint_timer_1 = QTimer()
-        self.joint_timer_1.timeout.connect(lambda: self.update_joint_timer(1))
-        self.joint_running_1 = False
-        
-        self.joint_timer_2 = QTimer()
-        self.joint_timer_2.timeout.connect(lambda: self.update_joint_timer(2))
-        self.joint_running_2 = False
+        #
+        # self.joint_timer_1 = QTimer()
+        # self.joint_timer_1.timeout.connect(lambda: self.update_joint_timer(1))
+        # self.joint_running_1 = False
+        #
+        # self.joint_timer_2 = QTimer()
+        # self.joint_timer_2.timeout.connect(lambda: self.update_joint_timer(2))
+        # self.joint_running_2 = False
         
         self.setup_ui()
 
@@ -68,16 +72,16 @@ class JudgeWindow(QMainWindow):
                 font-size: 22px;
                 font-weight: bold;
                 padding: 10px;
-                background-color: #2c3e50;
+                background-color: #808080;
                 color: white;
                 border-radius: 5px;
             }
         """)
-        main_layout.addWidget(title)
+        main_layout.addWidget(title, stretch=1)
 
         # Таймер матча
         timer_group = self.create_timer_section()
-        main_layout.addWidget(timer_group)
+        main_layout.addWidget(timer_group, stretch=3)
 
         # Секции для двух борцов
         athletes_layout = QHBoxLayout()
@@ -90,11 +94,11 @@ class JudgeWindow(QMainWindow):
         athlete2_group = self.create_athlete_control(2, "#2980b9")
         athletes_layout.addWidget(athlete2_group)
 
-        main_layout.addLayout(athletes_layout)
+        main_layout.addLayout(athletes_layout, stretch=5)
 
         # Глобальные кнопки управления
         control_group = self.create_global_controls()
-        main_layout.addWidget(control_group)
+        main_layout.addWidget(control_group, stretch=3)
 
         self.setStyleSheet("""
             QMainWindow { background-color: #ecf0f1; }
@@ -123,11 +127,13 @@ class JudgeWindow(QMainWindow):
         layout = QVBoxLayout()
 
         # Отображение времени
+        timer_layout = QHBoxLayout()
+
         self.timer_display = QLabel("3:00")
         self.timer_display.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.timer_display.setStyleSheet("""
             QLabel {
-                font-size: 42px;
+                font-size: 64px;
                 font-weight: bold;
                 background-color: black;
                 color: white;
@@ -135,25 +141,49 @@ class JudgeWindow(QMainWindow):
                 border-radius: 5px;
             }
         """)
-        layout.addWidget(self.timer_display)
+        timer_layout.addWidget(self.timer_display, stretch=9)
+
+        self.hold_timer_display = QLabel("")
+        self.hold_timer_display.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.hold_timer_display.setStyleSheet("""
+            QLabel {
+                font-size: 64px;
+                font-weight: bold;
+                background-color: black;
+                color: yellow;
+                padding: 15px;
+                border-radius: 5px;
+            }
+        """)
+        timer_layout.addWidget(self.hold_timer_display, stretch=1)
+
+        layout.addLayout(timer_layout)
 
         # Кнопки управления таймером
         timer_buttons = QHBoxLayout()
 
+        self.time_input = QLineEdit()
+        self.time_input.setPlaceholderText("Время (в секундах)")
+        # self.time_input.textChanged.connect(
+        #     lambda text: self.update_athlete_name(athlete_num, text)
+        # )
+        # setattr(self, f"name_input_{athlete_num}", self.time_input)
+        timer_buttons.addWidget(self.time_input, stretch=1)
+
         self.start_button = QPushButton("▶ Старт")
         self.start_button.clicked.connect(self.start_match_timer)
-        self.start_button.setStyleSheet("background-color: #27ae60; color: white;")
-        timer_buttons.addWidget(self.start_button)
+        self.start_button.setStyleSheet("background-color: #2c3e50; color: white;")
+        timer_buttons.addWidget(self.start_button, stretch=2)
 
-        self.pause_button = QPushButton("⏸ Пауза")
+        self.pause_button = QPushButton("|| Пауза")
         self.pause_button.clicked.connect(self.pause_match_timer)
-        self.pause_button.setStyleSheet("background-color: #f39c12; color: white;")
-        timer_buttons.addWidget(self.pause_button)
+        self.pause_button.setStyleSheet("background-color: #2c3e50; color: white;")
+        timer_buttons.addWidget(self.pause_button, stretch=2)
 
         self.reset_button = QPushButton("↻ Сброс")
         self.reset_button.clicked.connect(self.reset_match_timer)
-        self.reset_button.setStyleSheet("background-color: #3498db; color: white;")
-        timer_buttons.addWidget(self.reset_button)
+        self.reset_button.setStyleSheet("background-color: #2c3e50; color: white;")
+        timer_buttons.addWidget(self.reset_button, stretch=2)
 
         layout.addLayout(timer_buttons)
         group.setLayout(layout)
@@ -257,35 +287,35 @@ class JudgeWindow(QMainWindow):
         warning_btn.setStyleSheet("background-color: #f39c12; color: white; font-size: 15px; min-height: 40px;")
         layout.addWidget(warning_btn)
         
-        # Удержание
-        hold_label = QLabel("Удержание: 00 сек")
-        hold_label.setStyleSheet("color: black; font-size: 14px; padding: 5px; font-weight: bold;")
-        setattr(self, f"hold_display_{athlete_num}", hold_label)
-        layout.addWidget(hold_label)
-        
-        hold_btn = QPushButton("⏱ Начать удержание")
-        hold_btn.clicked.connect(lambda: self.toggle_hold(athlete_num))
-        hold_btn.setStyleSheet(f"background-color: {color}; color: white; font-size: 15px; min-height: 40px;")
-        setattr(self, f"hold_button_{athlete_num}", hold_btn)
-        layout.addWidget(hold_btn)
-        
-        # Информация о правилах удержания
-        hold_info = QLabel("10сек=+2 очка, 20сек=+4 (победа)")
-        hold_info.setStyleSheet("font-size: 11px; color: #7f8c8d; font-style: italic;")
-        hold_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(hold_info)
-        
-        # Болевой прием
-        joint_label = QLabel("Болевой: 00 сек")
-        joint_label.setStyleSheet("color: black; font-size: 14px; padding: 5px; font-weight: bold;")
-        setattr(self, f"joint_display_{athlete_num}", joint_label)
-        layout.addWidget(joint_label)
-        
-        joint_btn = QPushButton("🤼 Начать болевой прием")
-        joint_btn.clicked.connect(lambda: self.toggle_joint(athlete_num))
-        joint_btn.setStyleSheet(f"background-color: {color}; color: white; font-size: 15px; min-height: 40px;")
-        setattr(self, f"joint_button_{athlete_num}", joint_btn)
-        layout.addWidget(joint_btn)
+        # # Удержание
+        # hold_label = QLabel("Удержание: 00 сек")
+        # hold_label.setStyleSheet("color: black; font-size: 14px; padding: 5px; font-weight: bold;")
+        # setattr(self, f"hold_display_{athlete_num}", hold_label)
+        # layout.addWidget(hold_label)
+        #
+        # hold_btn = QPushButton("⏱ Начать удержание")
+        # hold_btn.clicked.connect(lambda: self.toggle_hold(athlete_num))
+        # hold_btn.setStyleSheet(f"background-color: {color}; color: white; font-size: 15px; min-height: 40px;")
+        # setattr(self, f"hold_button_{athlete_num}", hold_btn)
+        # layout.addWidget(hold_btn)
+        #
+        # # Информация о правилах удержания
+        # hold_info = QLabel("10сек=+2 очка, 20сек=+4")
+        # hold_info.setStyleSheet("font-size: 11px; color: #7f8c8d; font-style: italic;")
+        # hold_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # layout.addWidget(hold_info)
+        #
+        # # Болевой прием
+        # joint_label = QLabel("Болевой: 00 сек")
+        # joint_label.setStyleSheet("color: black; font-size: 14px; padding: 5px; font-weight: bold;")
+        # setattr(self, f"joint_display_{athlete_num}", joint_label)
+        # layout.addWidget(joint_label)
+        #
+        # joint_btn = QPushButton("🤼 Начать болевой прием")
+        # joint_btn.clicked.connect(lambda: self.toggle_joint(athlete_num))
+        # joint_btn.setStyleSheet(f"background-color: {color}; color: white; font-size: 15px; min-height: 40px;")
+        # setattr(self, f"joint_button_{athlete_num}", joint_btn)
+        # layout.addWidget(joint_btn)
         
         # КНОПКА ПОБЕДА УДАЛЕНА
         
@@ -298,6 +328,23 @@ class JudgeWindow(QMainWindow):
         group = QGroupBox("Глобальное управление")
         layout = QVBoxLayout()
 
+        # Нулевая строка кнопок
+        row0 = QHBoxLayout()
+
+        # КНОПКА ЗАПУСКА СЕКУНДОМЕРА УДЕРЖАНИЯ/БОЛЕВОГО
+        stopwatch_btn = QPushButton("⏱ СЧИТАТЬ БОЛЕВОЙ/УДЕРЖАНИЕ")
+        stopwatch_btn.clicked.connect(self.start_hold_joint_seconds)  # TODO function
+        stopwatch_btn.setStyleSheet("""
+            background-color: #9b59b6; 
+            color: white; 
+            font-size: 15px;
+            min-height: 50px;
+        """)
+        self.stopwatch_button = stopwatch_btn
+        row0.addWidget(stopwatch_btn)
+
+        layout.addLayout(row0)
+
         # Первая строка кнопок
         row1 = QHBoxLayout()
 
@@ -305,7 +352,7 @@ class JudgeWindow(QMainWindow):
         undo_btn = QPushButton("↶ ОТМЕНИТЬ ПОСЛЕДНЕЕ ДЕЙСТВИЕ")
         undo_btn.clicked.connect(self.undo_last_action)
         undo_btn.setStyleSheet("""
-            background-color: #9b59b6; 
+            background-color: #2c3e50; 
             color: white; 
             font-size: 15px;
             min-height: 50px;
@@ -321,7 +368,7 @@ class JudgeWindow(QMainWindow):
         reset_all_btn = QPushButton("🔄 СБРОС ВСЕГО")
         reset_all_btn.clicked.connect(self.reset_all)
         reset_all_btn.setStyleSheet("""
-            background-color: #e74c3c; 
+            background-color: #2c3e50; 
             color: white; 
             font-size: 15px;
             min-height: 45px;
@@ -332,7 +379,7 @@ class JudgeWindow(QMainWindow):
         end_match_btn = QPushButton("⏱ Завершить матч (определить победителя)")
         end_match_btn.clicked.connect(self.end_match_and_determine_winner)
         end_match_btn.setStyleSheet("""
-            background-color: #16a085; 
+            background-color: #2c3e50; 
             color: white; 
             font-size: 14px;
             min-height: 45px;
@@ -355,15 +402,31 @@ class JudgeWindow(QMainWindow):
     def pause_match_timer(self):
         """Поставить на паузу"""
         self.match_running = False
+        self.end_hold_joint_seconds()
         self.match_timer.stop()
+
+    def start_hold_joint_seconds(self):
+        """Запустить отсчет удержания/болевого"""
+        if self.hold_joint_is_running:
+            self.end_hold_joint_seconds()
+            return
+        if self.match_running and not self.match_data.match_is_over:
+            self.hold_joint_is_running = True
+
+    def end_hold_joint_seconds(self):
+        """Отменить удержание/болевой"""
+        self.hold_joint_is_running = False
+        self.match_data.hold_joint_seconds = 0
 
     def reset_match_timer(self):
         """Сбросить таймер"""
+        self.end_hold_joint_seconds()
         self.match_running = False
         self.match_timer.stop()
-        self.match_data.match_seconds = 180
-        self.match_data.update_time("3:00", 180)
-        self.timer_display.setText("3:00")
+        self.match_data.match_seconds = int(self.time_input.text() if self.time_input.text() else 0)
+        self.match_data.update_time(self.match_data.match_seconds, 0)
+        self.timer_display.setText(self.match_data.match_time)
+        self.hold_timer_display.setText("")
 
     def update_match_timer(self):
         """Обновить таймер матча"""
@@ -373,9 +436,18 @@ class JudgeWindow(QMainWindow):
             secs = self.match_data.match_seconds % 60
             time_str = f"{mins}:{secs:02d}"
             self.timer_display.setText(time_str)
-            self.match_data.update_time(time_str, self.match_data.match_seconds)
+            # TODO: check vvv
+            hold_time_str = ""
+            if self.hold_joint_is_running:
+                self.match_data.hold_joint_seconds += 1
+                hold_time_str = f"{self.match_data.hold_joint_seconds}"
+            self.hold_timer_display.setText(hold_time_str)
+            self.match_data.update_time(self.match_data.match_seconds,
+                                        self.match_data.hold_joint_seconds)
         else:
             # Время вышло - автоматически определяем победителя
+            # TODO: Сигнал остановки времени
+            self.match_end_sound.play()
             self.pause_match_timer()
             self.end_match_and_determine_winner()
 
@@ -451,62 +523,62 @@ class JudgeWindow(QMainWindow):
 
             # БЕЗ ВСПЛЫВАЮЩИХ УВЕДОМЛЕНИЙ - только обновляем UI
 
-    def toggle_hold(self, athlete_num):
-        """Переключить удержание"""
-        if athlete_num == 1:
-            if not self.hold_running_1:
-                self.hold_running_1 = True
-                self.hold_timer_1.start(1000)
-                self.hold_button_1.setText("⏹ Остановить удержание")
-                self.hold_button_1.setStyleSheet("background-color: #e74c3c; color: white;")
-            else:
-                self.hold_running_1 = False
-                self.hold_timer_1.stop()
-                self.hold_button_1.setText("⏱ Начать удержание")
-                self.hold_button_1.setStyleSheet("background-color: #c0392b; color: white;")
-                # Сброс удержания
-                self.match_data.athlete1_hold_time = 0
-                self.match_data.update_hold_time(1, 0)
-                self.hold_display_1.setText("Удержание: 00 сек")
-        else:
-            if not self.hold_running_2:
-                self.hold_running_2 = True
-                self.hold_timer_2.start(1000)
-                self.hold_button_2.setText("⏹ Остановить удержание")
-                self.hold_button_2.setStyleSheet("background-color: #e74c3c; color: white;")
-            else:
-                self.hold_running_2 = False
-                self.hold_timer_2.stop()
-                self.hold_button_2.setText("⏱ Начать удержание")
-                self.hold_button_2.setStyleSheet("background-color: #2980b9; color: white;")
-                self.match_data.athlete2_hold_time = 0
-                self.match_data.update_hold_time(2, 0)
-                self.hold_display_2.setText("Удержание: 00 сек")
-
-    def update_hold_timer(self, athlete_num):  # TODO: лажа:(
-                                               # вроде как баллы автоматически начисляются в check_hold_down_points
-        """Обновить таймер удержания (БЕЗ ВСПЛЫВАЮЩИХ УВЕДОМЛЕНИЙ)"""
-        if athlete_num == 1:
-            hold_time = self.match_data.athlete1_hold_time + 1
-            self.match_data.update_hold_time(1, hold_time)
-            self.hold_display_1.setText(f"Удержание: {hold_time:02d} сек")
-
-            # Автоматическое начисление очков БЕЗ УВЕДОМЛЕНИЙ
-            if hold_time == 10:
-                self.add_points(1, 2)
-            elif hold_time == 20:
-                self.toggle_hold(1)
-                self.pause_match_timer()
-        else:
-            hold_time = self.match_data.athlete2_hold_time + 1
-            self.match_data.update_hold_time(2, hold_time)
-            self.hold_display_2.setText(f"Удержание: {hold_time:02d} сек")
-
-            if hold_time == 10:
-                self.add_points(2, 2)
-            elif hold_time == 20:
-                self.toggle_hold(2)
-                self.pause_match_timer()
+    # def toggle_hold(self, athlete_num):
+    #     """Переключить удержание"""
+    #     if athlete_num == 1:
+    #         if not self.hold_running_1:
+    #             self.hold_running_1 = True
+    #             self.hold_timer_1.start(1000)
+    #             self.hold_button_1.setText("⏹ Остановить удержание")
+    #             self.hold_button_1.setStyleSheet("background-color: #e74c3c; color: white;")
+    #         else:
+    #             self.hold_running_1 = False
+    #             self.hold_timer_1.stop()
+    #             self.hold_button_1.setText("⏱ Начать удержание")
+    #             self.hold_button_1.setStyleSheet("background-color: #c0392b; color: white;")
+    #             # Сброс удержания
+    #             self.match_data.athlete1_hold_time = 0
+    #             self.match_data.update_hold_time(1, 0)
+    #             self.hold_display_1.setText("Удержание: 00 сек")
+    #     else:
+    #         if not self.hold_running_2:
+    #             self.hold_running_2 = True
+    #             self.hold_timer_2.start(1000)
+    #             self.hold_button_2.setText("⏹ Остановить удержание")
+    #             self.hold_button_2.setStyleSheet("background-color: #e74c3c; color: white;")
+    #         else:
+    #             self.hold_running_2 = False
+    #             self.hold_timer_2.stop()
+    #             self.hold_button_2.setText("⏱ Начать удержание")
+    #             self.hold_button_2.setStyleSheet("background-color: #2980b9; color: white;")
+    #             self.match_data.athlete2_hold_time = 0
+    #             self.match_data.update_hold_time(2, 0)
+    #             self.hold_display_2.setText("Удержание: 00 сек")
+    #
+    # def update_hold_timer(self, athlete_num):  # TODO: лажа:(
+    #                                            # вроде как баллы автоматически начисляются в check_hold_down_points
+    #     """Обновить таймер удержания (БЕЗ ВСПЛЫВАЮЩИХ УВЕДОМЛЕНИЙ)"""
+    #     if athlete_num == 1:
+    #         hold_time = self.match_data.athlete1_hold_time + 1
+    #         self.match_data.update_hold_time(1, hold_time)
+    #         self.hold_display_1.setText(f"Удержание: {hold_time:02d} сек")
+    #
+    #         # Автоматическое начисление очков БЕЗ УВЕДОМЛЕНИЙ
+    #         if hold_time == 10:
+    #             self.add_points(1, 2)
+    #         elif hold_time == 20:
+    #             self.toggle_hold(1)
+    #             self.pause_match_timer()
+    #     else:
+    #         hold_time = self.match_data.athlete2_hold_time + 1
+    #         self.match_data.update_hold_time(2, hold_time)
+    #         self.hold_display_2.setText(f"Удержание: {hold_time:02d} сек")
+    #
+    #         if hold_time == 10:
+    #             self.add_points(2, 2)
+    #         elif hold_time == 20:
+    #             self.toggle_hold(2)
+    #             self.pause_match_timer()
 
     def update_athlete_name(self, athlete_num, name):
         """Обновить имя борца"""
@@ -630,10 +702,10 @@ class JudgeWindow(QMainWindow):
         """Обработчик сигнала окончания матча"""
         # Останавливаем все таймеры
         self.pause_match_timer()
-        if self.hold_running_1:
-            self.toggle_hold(1)
-        if self.hold_running_2:
-            self.toggle_hold(2)
+        # if self.hold_running_1:
+        #     self.toggle_hold(1)
+        # if self.hold_running_2:
+        #     self.toggle_hold(2)
 
     def reset_all(self):
         """Сбросить все данные"""
@@ -659,11 +731,11 @@ class JudgeWindow(QMainWindow):
             warning_display = getattr(self, f"warning_display_{i}")
             warning_display.setText("Предупреждения: 0/3")
 
-            hold_display = getattr(self, f"hold_display_{i}")
-            hold_display.setText("Удержание: 00 сек")
-
-            joint_display = getattr(self, f"joint_display_{i}")
-            joint_display.setText("Болевой: 00 сек")
+            # hold_display = getattr(self, f"hold_display_{i}")
+            # hold_display.setText("Удержание: 00 сек")
+            #
+            # joint_display = getattr(self, f"joint_display_{i}")
+            # joint_display.setText("Болевой: 00 сек")
 
             name_input = getattr(self, f"name_input_{i}")
             name_input.clear()
@@ -671,69 +743,69 @@ class JudgeWindow(QMainWindow):
             club_input = getattr(self, f"club_input_{i}")
             club_input.clear()
 
-            # Сброс кнопок удержания
-            hold_button = getattr(self, f"hold_button_{i}")
-            hold_button.setText("⏱ Начать удержание")
-            color = "#c0392b" if i == 1 else "#2980b9"
-            hold_button.setStyleSheet(f"background-color: {color}; color: white;")
+        #     # Сброс кнопок удержания
+        #     hold_button = getattr(self, f"hold_button_{i}")
+        #     hold_button.setText("⏱ Начать удержание")
+        #     color = "#c0392b" if i == 1 else "#2980b9"
+        #     hold_button.setStyleSheet(f"background-color: {color}; color: white;")
+        #
+        #     # Сброс кнопок болевого
+        #     joint_button = getattr(self, f"joint_button_{i}")
+        #     joint_button.setText("🤼‍♂️ Начать болевой прием")
+        #     color = "#c0392b" if i == 1 else "#2980b9"
+        #     joint_button.setStyleSheet(f"background-color: {color}; color: white;")
+        #
+        # # Остановить удержания
+        # if self.hold_running_1:
+        #     self.hold_running_1 = False
+        #     self.hold_timer_1.stop()
+        # if self.hold_running_2:
+        #     self.hold_running_2 = False
+        #     self.hold_timer_2.stop()
+        #
+        # # Остановить болевой
+        # if self.joint_running_1:
+        #     self.joint_running_1 = False
+        #     self.joint_timer_1.stop()
+        # if self.joint_running_2:
+        #     self.joint_running_2 = False
+        #     self.joint_timer_2.stop()
 
-            # Сброс кнопок болевого
-            joint_button = getattr(self, f"joint_button_{i}")
-            joint_button.setText("🤼‍♂️ Начать болевой прием")
-            color = "#c0392b" if i == 1 else "#2980b9"
-            joint_button.setStyleSheet(f"background-color: {color}; color: white;")
-
-        # Остановить удержания
-        if self.hold_running_1:
-            self.hold_running_1 = False
-            self.hold_timer_1.stop()
-        if self.hold_running_2:
-            self.hold_running_2 = False
-            self.hold_timer_2.stop()
-
-        # Остановить болевой
-        if self.joint_running_1:
-            self.joint_running_1 = False
-            self.joint_timer_1.stop()
-        if self.joint_running_2:
-            self.joint_running_2 = False
-            self.joint_timer_2.stop()
-
-    def toggle_joint(self, athlete_num):
-        if athlete_num == 1:
-            if not self.joint_running_1:
-                self.joint_running_1 = True
-                self.joint_timer_1.start(1000)
-                self.joint_button_1.setText("⏹ Остановить болевой")
-                self.joint_button_1.setStyleSheet("background-color: #e74c3c; color: white;")
-            else:
-                self.joint_running_1 = False
-                self.joint_timer_1.stop()
-                self.joint_button_1.setText("🤼‍♂️ Начать болевой прием")
-                self.joint_button_1.setStyleSheet("background-color: #c0392b; color: white;")
-                self.match_data.update_joint_time(1, 0)
-                self.joint_display_1.setText("Болевой: 00 сек")
-        else:
-            if not self.joint_running_2:
-                self.joint_running_2 = True
-                self.joint_timer_2.start(1000)
-                self.joint_button_2.setText("⏹ Остановить болевой")
-                self.joint_button_2.setStyleSheet("background-color: #e74c3c; color: white;")
-            else:
-                self.joint_running_2 = False
-                self.joint_timer_2.stop()
-                self.joint_button_2.setText("🤼‍♂️ Начать болевой прием")
-                self.joint_button_2.setStyleSheet("background-color: #2980b9; color: white;")
-                self.match_data.update_joint_time(2, 0)
-                self.joint_display_2.setText("Болевой: 00 сек")
-    
-    def update_joint_timer(self, athlete_num):
-        if athlete_num == 1:
-            t = self.match_data.athlete1_joint_time + 1
-            self.match_data.update_joint_time(1, t)
-            self.joint_display_1.setText(f"Болевой: {t:02d} сек")
-        else:
-            t = self.match_data.athlete2_joint_time + 1
-            self.match_data.update_joint_time(2, t)
-            self.joint_display_2.setText(f"Болевой: {t:02d} сек")
+    # def toggle_joint(self, athlete_num):
+    #     if athlete_num == 1:
+    #         if not self.joint_running_1:
+    #             self.joint_running_1 = True
+    #             self.joint_timer_1.start(1000)
+    #             self.joint_button_1.setText("⏹ Остановить болевой")
+    #             self.joint_button_1.setStyleSheet("background-color: #e74c3c; color: white;")
+    #         else:
+    #             self.joint_running_1 = False
+    #             self.joint_timer_1.stop()
+    #             self.joint_button_1.setText("🤼‍♂️ Начать болевой прием")
+    #             self.joint_button_1.setStyleSheet("background-color: #c0392b; color: white;")
+    #             self.match_data.update_joint_time(1, 0)
+    #             self.joint_display_1.setText("Болевой: 00 сек")
+    #     else:
+    #         if not self.joint_running_2:
+    #             self.joint_running_2 = True
+    #             self.joint_timer_2.start(1000)
+    #             self.joint_button_2.setText("⏹ Остановить болевой")
+    #             self.joint_button_2.setStyleSheet("background-color: #e74c3c; color: white;")
+    #         else:
+    #             self.joint_running_2 = False
+    #             self.joint_timer_2.stop()
+    #             self.joint_button_2.setText("🤼‍♂️ Начать болевой прием")
+    #             self.joint_button_2.setStyleSheet("background-color: #2980b9; color: white;")
+    #             self.match_data.update_joint_time(2, 0)
+    #             self.joint_display_2.setText("Болевой: 00 сек")
+    #
+    # def update_joint_timer(self, athlete_num):
+    #     if athlete_num == 1:
+    #         t = self.match_data.athlete1_joint_time + 1
+    #         self.match_data.update_joint_time(1, t)
+    #         self.joint_display_1.setText(f"Болевой: {t:02d} сек")
+    #     else:
+    #         t = self.match_data.athlete2_joint_time + 1
+    #         self.match_data.update_joint_time(2, t)
+    #         self.joint_display_2.setText(f"Болевой: {t:02d} сек")
     

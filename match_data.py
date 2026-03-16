@@ -18,10 +18,10 @@ class MatchData(QObject):
 
     # Сигналы для обновления UI
     score_changed = pyqtSignal(int, int)  # athlete_num, new_score
-    time_changed = pyqtSignal(str)  # time_string
+    time_changed = pyqtSignal(str, int)  # time_string
     warning_added = pyqtSignal(int, int)  # athlete_num, warnings_count
-    hold_time_changed = pyqtSignal(int, str)  # athlete_num, hold_time
-    joint_lock_time_changed = pyqtSignal(int, str) 
+    # hold_time_changed = pyqtSignal(int, str)  # athlete_num, hold_time
+    # joint_lock_time_changed = pyqtSignal(int, str)
     athlete_info_changed = pyqtSignal(int, str, str)  # athlete_num, name, club
     match_reset = pyqtSignal()
     match_ended = pyqtSignal(int, str)  # winner_num, reason
@@ -35,18 +35,19 @@ class MatchData(QObject):
         self.athlete1_club = ""
         self.athlete1_score = 0
         self.athlete1_warnings = 0
-        self.athlete1_hold_time = 0
+        # self.athlete1_hold_time = 0
 
         self.athlete2_name = ""
         self.athlete2_club = ""
         self.athlete2_score = 0
         self.athlete2_warnings = 0
-        self.athlete2_hold_time = 0
-        self.athlete1_joint_time = 0
-        self.athlete2_joint_time = 0
+        # self.athlete2_hold_time = 0
+        # self.athlete1_joint_time = 0
+        # self.athlete2_joint_time = 0
         # Время матча
-        self.match_time = "3:00"
         self.match_seconds = 180
+        self.match_time = f"{self.match_seconds // 60}:{(self.match_seconds % 60):02d}"
+        self.hold_joint_seconds = 0
 
         # Флаг окончания матча
         self.match_is_over = False
@@ -54,12 +55,12 @@ class MatchData(QObject):
         # История действий для отмены
         self.action_history = []
 
-    def update_joint_time(self, athlete_num, seconds):
-        if athlete_num == 1:
-            self.athlete1_joint_time = seconds
-        else:
-            self.athlete2_joint_time = seconds
-        self.joint_lock_time_changed.emit(athlete_num, f"{seconds:02d}")
+    # def update_joint_time(self, athlete_num, seconds):
+    #     if athlete_num == 1:
+    #         self.athlete1_joint_time = seconds
+    #     else:
+    #         self.athlete2_joint_time = seconds
+    #     self.joint_lock_time_changed.emit(athlete_num, f"{seconds:02d}")
 
     def save_state(self):
         """Сохранить текущее состояние для возможности отмены"""
@@ -68,8 +69,8 @@ class MatchData(QObject):
             'athlete2_score': self.athlete2_score,
             'athlete1_warnings': self.athlete1_warnings,
             'athlete2_warnings': self.athlete2_warnings,
-            'athlete1_hold_time': self.athlete1_hold_time,
-            'athlete2_hold_time': self.athlete2_hold_time,
+            # 'athlete1_hold_time': self.athlete1_hold_time,
+            # 'athlete2_hold_time': self.athlete2_hold_time,
             'match_is_over': self.match_is_over
         }
 
@@ -79,8 +80,8 @@ class MatchData(QObject):
         self.athlete2_score = state['athlete2_score']
         self.athlete1_warnings = state['athlete1_warnings']
         self.athlete2_warnings = state['athlete2_warnings']
-        self.athlete1_hold_time = state['athlete1_hold_time']
-        self.athlete2_hold_time = state['athlete2_hold_time']
+        # self.athlete1_hold_time = state['athlete1_hold_time']
+        # self.athlete2_hold_time = state['athlete2_hold_time']
         self.match_is_over = state['match_is_over']
 
     def add_action(self, action_type, athlete_num, value):
@@ -131,7 +132,7 @@ class MatchData(QObject):
 
         # Проверка тотальной победы по разнице очков (12+ очков) TODO: лажа:(
         score_diff = abs(current_score - opponent_score)
-        if score_diff >= 12:
+        if score_diff >= 8:
             self.match_is_over = True
             winner = athlete_num if current_score > opponent_score else (3 - athlete_num)
             self.match_ended.emit(winner, "Тотальная победа (превосходство 12+ очков)")
@@ -164,9 +165,9 @@ class MatchData(QObject):
 
         # Начисление очков сопернику согласно правилам FIAS
         if warnings_count == 1:
-            bonus_points = 1
+            bonus_points = 0
         elif warnings_count == 2:
-            bonus_points = 2
+            bonus_points = 1
         elif warnings_count == 3:
             bonus_points = 1
         else:
@@ -190,34 +191,36 @@ class MatchData(QObject):
         self.match_ended.emit(winner, f"Дисквалификация борца {athlete_num}")
         return True
 
-    def check_hold_down_points(self, athlete_num, hold_seconds):
-        """Проверить начисление очков за удержание"""
-        if hold_seconds == 10:
-            self.update_score(athlete_num, 2)
-        elif hold_seconds == 20:
-            self.update_score(athlete_num, 4)  # TODO: лажа:(
-            self.match_is_over = True                # TODO: лажа:(
-            self.match_ended.emit(athlete_num, "Тотальная победа (удержание 20 сек)")  # TODO: лажа:(
-            return True
-        return False
+    # def check_hold_down_points(self, athlete_num, hold_seconds):
+    #     """Проверить начисление очков за удержание"""
+    #     if hold_seconds == 10:
+    #         self.update_score(athlete_num, 2)
+    #     elif hold_seconds == 20:
+    #         self.update_score(athlete_num, 4)  # TODO: лажа:(
+    #         self.match_is_over = True                # TODO: лажа:(
+    #         self.match_ended.emit(athlete_num, "Тотальная победа (удержание 20 сек)")  # TODO: лажа:(
+    #         return True
+    #     return False
 
-    def update_time(self, time_string, seconds):
+    def update_time(self, match_seconds, hold_seconds):
         """Обновить время матча"""
-        self.match_time = time_string
-        self.match_seconds = seconds
-        self.time_changed.emit(time_string)
+        self.match_seconds = match_seconds
+        self.match_time = f"{match_seconds // 60}:{match_seconds % 60:02d}"
+        self.hold_joint_seconds = hold_seconds
+        self.time_changed.emit(self.match_time, hold_seconds)
+        # TODO: hold_joint_seconds update
 
-    def update_hold_time(self, athlete_num, hold_seconds):
-        """Обновить время удержания с проверкой правил"""
-        if athlete_num == 1:
-            self.athlete1_hold_time = hold_seconds
-        else:
-            self.athlete2_hold_time = hold_seconds
-        self.hold_time_changed.emit(athlete_num, f"{hold_seconds:02d}")
-
-        # Проверка начисления очков за удержание
-        self.check_hold_down_points(athlete_num, hold_seconds)  # TODO: лажа:(
-                                                                # для проверки как-то странно еще и начислять очки
+    # def update_hold_time(self, athlete_num, hold_seconds):
+    #     """Обновить время удержания с проверкой правил"""
+    #     if athlete_num == 1:
+    #         self.athlete1_hold_time = hold_seconds
+    #     else:
+    #         self.athlete2_hold_time = hold_seconds
+    #     self.hold_time_changed.emit(athlete_num, f"{hold_seconds:02d}")
+    #
+    #     # Проверка начисления очков за удержание
+    #     self.check_hold_down_points(athlete_num, hold_seconds)  # TODO: лажа:(
+    #                                                             # для проверки как-то странно еще и начислять очки
 
     def update_athlete_info(self, athlete_num, name, club):
         """Обновить информацию о борце"""
@@ -235,15 +238,16 @@ class MatchData(QObject):
         self.athlete2_score = 0
         self.athlete1_warnings = 0
         self.athlete2_warnings = 0
-        self.athlete1_hold_time = 0
-        self.athlete2_hold_time = 0
+        # self.athlete1_hold_time = 0
+        # self.athlete2_hold_time = 0
         self.match_seconds = 180
-        self.match_time = "3:00"
+        self.match_time = f"{self.match_seconds // 60}:{(self.match_seconds % 60):02d}"
+        self.hold_joint_seconds = 0
         self.match_is_over = False
         self.action_history = []  # Очистить историю
         self.match_reset.emit()
-        self.athlete1_joint_time = 0
-        self.athlete2_joint_time = 0
+        # self.athlete1_joint_time = 0
+        # self.athlete2_joint_time = 0
 
     def get_winner_at_end(self):
         """Определить победителя по окончанию времени согласно правилам FIAS"""
@@ -251,7 +255,7 @@ class MatchData(QObject):
 
         if score_diff >= 8:
             winner = 1 if self.athlete1_score > self.athlete2_score else 2
-            return winner, "Победа по преимуществу (8-11 очков)"
+            return winner, "Победа по преимуществу"
         elif score_diff >= 1:
             winner = 1 if self.athlete1_score > self.athlete2_score else 2
             return winner, "Победа по очкам"
